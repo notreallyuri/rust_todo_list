@@ -1,11 +1,12 @@
 use crate::config::{Config, SortBy, SortOrder};
 use std::fs;
+use std::path::Path;
 
-pub fn onboarding() -> Result<(), Box<dyn std::error::Error>> {
+pub fn onboarding() -> Result<String, Box<dyn std::error::Error>> {
     let task_path: String =
-        cliclack::input("Where should we save the tasks? (Default: ./tasks.json)")
-            .placeholder("./tasks.json")
-            .default_input("./tasks.json")
+        cliclack::input("Where should we save the tasks? (Default: ./tasks)")
+            .placeholder("./tasks")
+            .default_input("./tasks")
             .validate(|input: &String| {
                 if input.is_empty() {
                     Err("Please enter a valid path")
@@ -32,7 +33,12 @@ pub fn onboarding() -> Result<(), Box<dyn std::error::Error>> {
             })
             .interact()?;
 
-    fs::write(&task_path, "[]")?;
+    let config_dir = Path::new(&config_path).parent();
+    if let Some(dir) = config_dir {
+        if !dir.exists() {
+            fs::create_dir_all(dir)?;
+        }
+    }
 
     let config = Config::new(SortBy::CreatedAt, SortOrder::Ascending, task_path.clone());
 
@@ -41,5 +47,5 @@ pub fn onboarding() -> Result<(), Box<dyn std::error::Error>> {
 
     cliclack::outro("Setup complete!")?;
 
-    Ok(())
+    Ok(config_path)
 }
