@@ -30,6 +30,7 @@ pub fn resolver() -> Result<String, Box<dyn std::error::Error>> {
     Ok(config_path)
 }
 
+#[allow(dead_code)]
 pub enum Pointers {
     Config,
     Task,

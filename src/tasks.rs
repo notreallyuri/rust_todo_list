@@ -1,6 +1,6 @@
-use crate::utils::{Pointers, read_pointers, get_next_task_id};
+use crate::utils::{Pointers, get_next_task_id, read_pointers};
 use chrono::{DateTime, Utc};
-use std::fs;
+use std::{fs, path::PathBuf, vec};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct Task {
@@ -54,20 +54,137 @@ impl Task {
         Ok(())
     }
 
-    pub fn display(&self, id: u32) {
-        if self.id != id {
-            println!("Task with ID {} not found.", id);
-            return;
+    fn load_tasks(task_dir: &str) -> Result<Vec<Task>, Box<dyn std::error::Error>> {
+        let mut tasks: Vec<Task> = vec![];
+
+        for entry in fs::read_dir(task_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+
+            if path.extension().is_some_and(|e| e == "json") {
+                let content = fs::read_to_string(&path)?;
+                let task: Task = serde_json::from_str(&content)?;
+                tasks.push(task);
+            }
         }
 
-        println!("Task ID: {}", self.id);
-        println!("Title: {}", self.title);
-        println!("Description: {}", self.description);
-        println!("Content: {}", self.content);
-        println!("Status: {}", self.status);
-        if let Some(due_date) = &self.due_date {
-            println!("Due Date: {}", due_date);
+        Ok(tasks)
+    }
+
+    pub fn select_task() -> Result<(), Box<dyn std::error::Error>> {
+        let task_dir = read_pointers(Pointers::Task)?;
+        let mut items: Vec<(String, String, String)> = vec![];
+        let tasks: Vec<Task> = Task::load_tasks(&task_dir)?;
+
+        for task in tasks {
+            let id_str: String = task.id.to_string();
+            let label: String = format!("{}: {}", task.id, task.title);
+            let hint: String = format!("Status: {}", task.status);
+
+            items.push((id_str, label, hint));
         }
-        println!("Created At: {}", self.created_at);
+
+        if items.is_empty() {
+            cliclack::log::info("📭 No tasks found.")?;
+            return Ok(());
+        }
+
+        let selected = cliclack::select("Select a task")
+            .items(&items)
+            .item("return".to_string(), "Return", "")
+            .interact()?;
+
+        if selected == "return" {
+            return Ok(());
+        }
+
+        let task_id: u32 = selected.parse::<u32>()?;
+        let file_path: PathBuf = std::path::Path::new(&task_dir).join(format!("{}.json", task_id));
+        let content = fs::read_to_string(&file_path)?;
+        let task: Task = serde_json::from_str(&content)?;
+
+        cliclack::log::info(format!("📌 Title: {}", task.title))?;
+        cliclack::log::info(format!("📝 Description: {}", task.description))?;
+        cliclack::log::info(format!("📚 Content: {}", task.content))?;
+        cliclack::log::info(format!("📍 Status: {}", task.status))?;
+        if let Some(due_date) = task.due_date {
+            cliclack::log::info(format!("⏰ Due Date: {}", due_date))?;
+        }
+        cliclack::log::info(format!("🕒 Created At: {}", task.created_at))?;
+
+        Ok(())
+    }
+
+    pub fn list_tasks() -> Result<(), Box<dyn std::error::Error>> {
+        let task_dir: String = read_pointers(Pointers::Task)?;
+        let mut items: Vec<(String, String, String)> = vec![];
+        let tasks: Vec<Task> = Task::load_tasks(&task_dir)?;
+
+        for task in tasks {
+            let id_str: String = task.id.to_string();
+            let label: String = format!("{}: {}", task.id, task.title);
+            let hint: String = format!("Status: {}", task.status);
+
+            items.push((id_str, label, hint));
+        }
+
+        if items.is_empty() {
+            cliclack::log::info("📭 No tasks found.")?;
+        } else {
+            items.iter().for_each(|(_, label, hint)| {
+                let _ = cliclack::log::info(format!("📌 {} ({})", label, hint));
+            })
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_task() -> Result<(), Box<dyn std::error::Error>> {
+        let task_dir: String = read_pointers(Pointers::Task)?;
+        let mut items: Vec<(String, String, String)> = vec![];
+        let tasks: Vec<Task> = Task::load_tasks(&task_dir)?;
+
+        for task in tasks {
+            let id_str: String = task.id.to_string();
+            let label: String = format!("{}: {}", task.id, task.title);
+            let hint: String = format!("Status: {}", task.status);
+
+            items.push((id_str, label, hint));
+        }
+
+        if items.is_empty() {
+            cliclack::log::info("📭 No tasks found.")?;
+            return Ok(());
+        }
+
+        let selected = cliclack::select("Select a task to delete")
+            .items(&items)
+            .item("return".to_string(), "Return", "")
+            .interact()?;
+
+        if selected == "return" {
+            return Ok(());
+        }
+
+        let task_id: u32 = selected.parse::<u32>()?;
+        let file_path: PathBuf = std::path::Path::new(&task_dir).join(format!("{}.json", task_id));
+        if file_path.exists() {
+            if cliclack::confirm(format!(
+                "⚠️ Are you sure you want to delete task {}?",
+                task_id
+            ))
+            .initial_value(false)
+            .interact()?
+            {
+                fs::remove_file(&file_path)?;
+                cliclack::log::info(format!("✅ Task {} deleted successfully", task_id))?;
+            } else {
+                cliclack::log::info("❌ Task deletion cancelled")?;
+            }
+        } else {
+            cliclack::log::error(format!("❌ Task {} not found", task_id))?;
+        }
+
+        Ok(())
     }
 }

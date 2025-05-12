@@ -9,10 +9,14 @@ pub fn handler() -> Result<(), Box<dyn std::error::Error>> {
 
     match add_menu {
         "add_task" => {
-            let title = cliclack::input("Enter task title").interact()?;
-            let description = cliclack::input("Enter task description").interact()?;
-            let content = cliclack::input("Enter task content").interact()?;
-            let status = cliclack::input("Enter task status").interact()?;
+            let title: String = cliclack::input("Enter task title").interact()?;
+            let description: String = cliclack::input("Enter task description").interact()?;
+            let content: String = cliclack::input("Enter task content").interact()?;
+            let status: String = cliclack::select("Select task status")
+                .item("todo".to_string(), "To Do", "")
+                .item("in_progress".to_string(), "In Progress", "")
+                .item("done".to_string(), "Done", "")
+                .interact()?;
 
             tasks::Task::create(title, description, content, status, None)?;
         }
