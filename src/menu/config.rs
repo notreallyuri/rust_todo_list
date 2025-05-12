@@ -1,9 +1,9 @@
-use crate::config::Config;
-use crate::resolver::resolver;
+use crate::config;
+use crate::utils::resolver;
 
-pub fn handle_config_menu() -> Result<(), Box<dyn std::error::Error>> {
+pub fn handler() -> Result<(), Box<dyn std::error::Error>> {
     let config_path = resolver()?;
-    let config = Config::load_from(&config_path)?;
+    let mut config = config::Config::load_from(&config_path)?;
 
     loop {
         let config_menu = cliclack::select("Configuration Menu")
@@ -17,18 +17,44 @@ pub fn handle_config_menu() -> Result<(), Box<dyn std::error::Error>> {
                 "Sort Order",
                 format!("Current sort order: {:?}", config.sort_order),
             )
-            .item(
-                "data_path",
-                "Data Path",
-                format!("Current data path: {}", config.data_path),
-            )
             .item("return", "Return", "Return to main menu")
             .interact()?;
 
         match config_menu {
-            "sort_by" => {}
-            "sort_order" => {}
-            "data_path" => {}
+            "sort_by" => {
+                let sort_by_menu = cliclack::select("Sort By Menu")
+                    .item("name", "Name", "")
+                    .item("status", "Status", "")
+                    .item("created_at", "Created At", "")
+                    .item("updated_at", "Updated At", "")
+                    .item("due_date", "Due Date", "")
+                    .interact()?;
+
+                match sort_by_menu {
+                    "name" => config.sort_by = config::SortBy::Name,
+                    "status" => config.sort_by = config::SortBy::Status,
+                    "created_at" => config.sort_by = config::SortBy::CreatedAt,
+                    "updated_at" => config.sort_by = config::SortBy::UpdatedAt,
+                    "due_date" => config.sort_by = config::SortBy::DueDate,
+                    _ => unreachable!("Unexpected sort by option"),
+                }
+
+                config.save_to(&config_path)?;
+            }
+            "sort_order" => {
+                let sort_order_menu = cliclack::select("Sort Order Menu")
+                    .item("asc", "Ascending", "")
+                    .item("desc", "Descending", "")
+                    .interact()?;
+
+                match sort_order_menu {
+                    "asc" => config.sort_order = config::SortOrder::Ascending,
+                    "desc" => config.sort_order = config::SortOrder::Descending,
+                    _ => unreachable!("Unexpected sort order option"),
+                }
+
+                config.save_to(&config_path)?;
+            }
             "return" => {
                 break;
             }

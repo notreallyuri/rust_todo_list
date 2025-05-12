@@ -1,9 +1,10 @@
 mod actions;
 mod config;
 mod menu;
-mod resolver;
+mod tasks;
+mod utils;
 
-use crate::resolver::resolver;
+use crate::utils::resolver;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config_path = resolver()?;

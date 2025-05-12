@@ -22,15 +22,13 @@ pub enum SortBy {
 pub struct Config {
     pub sort_by: SortBy,
     pub sort_order: SortOrder,
-    pub data_path: String,
 }
 
 impl Config {
-    pub fn new(sort_by: SortBy, sort_order: SortOrder, data_path: String) -> Self {
+    pub fn new(sort_by: SortBy, sort_order: SortOrder) -> Self {
         Config {
             sort_by,
             sort_order,
-            data_path,
         }
     }
 
@@ -48,11 +46,7 @@ impl Config {
     pub fn ensure_exists<P: AsRef<Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
         let path_ref = path.as_ref();
         if !path_ref.exists() {
-            let default = Config::new(
-                SortBy::CreatedAt,
-                SortOrder::Ascending,
-                "./tasks.json".to_string(),
-            );
+            let default = Config::new(SortBy::CreatedAt, SortOrder::Ascending);
             default.save_to(path_ref)?;
             cliclack::log::info(format!(
                 "⚠️  Config file not found at '{}'. Recreating default config.",

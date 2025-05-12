@@ -1,4 +1,4 @@
-use crate::menu::{add_task, config};
+use crate::menu::{add_task, config, delete_task, get_task};
 
 pub fn main_menu() -> Result<(), Box<dyn std::error::Error>> {
     loop {
@@ -12,24 +12,13 @@ pub fn main_menu() -> Result<(), Box<dyn std::error::Error>> {
             .interact()?;
 
         match main_menu {
-            "add_task" => add_task::handle_add_task_menu()?,
+            "add_task" => add_task::handler()?,
             "edit_task" => {
                 cliclack::outro("Edit Task")?;
             }
-            "get_task" => {
-                let get_menu = cliclack::select("Get Menu")
-                    .item("get_all", "Get All Tasks", "")
-                    .item("get_by_id", "Get Task", "Get a task by ID")
-                    .item("get_by_status", "Get Tasks", "Get tasks by status")
-                    .interact()?;
-            }
-            "config" => config::handle_config_menu()?,
-            "delete_task" => {
-                let delete_menu = cliclack::select("Delete Menu")
-                    .item("delete_all", "Delete All Tasks", "")
-                    .item("delete_by_id", "Delete Task", "Delete a task by ID")
-                    .interact()?;
-            }
+            "get_task" => get_task::handler()?,
+            "config" => config::handler()?,
+            "delete_task" => delete_task::handler()?,
             "exit" => {
                 cliclack::outro("Exiting...")?;
                 break;
