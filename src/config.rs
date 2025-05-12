@@ -2,15 +2,23 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "lowercase")]
 pub enum SortOrder {
-    Asc,
-    Dsc,
+    Ascending,
+    Descending,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum SortBy {
+    Name,
+    Status,
+    CreatedAt,
+    UpdatedAt,
+    DueDate,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
-    pub sort_by: String,
+    pub sort_by: SortBy,
     pub sort_order: SortOrder,
     pub data_path: String,
 }
@@ -28,7 +36,7 @@ impl Config {
         fs::write("config.json", json).expect("Could not write config file");
     }
 
-    pub fn new(sort_by: String, sort_order: SortOrder, data_path: String) -> Self {
+    pub fn new(sort_by: SortBy, sort_order: SortOrder, data_path: String) -> Self {
         Config {
             sort_by,
             sort_order,

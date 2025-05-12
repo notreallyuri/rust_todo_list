@@ -4,7 +4,6 @@ use std::{fs, io::Write};
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "lowercase")]
 pub enum ToDoStatus {
     NotStarted,
     Pending,
