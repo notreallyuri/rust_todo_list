@@ -12,7 +12,7 @@ pub fn handler() -> Result<(), Box<dyn std::error::Error>> {
         "get_all" => tasks::Task::list_tasks()?,
         "get_by_id" => tasks::Task::read_task()?,
         "get_by_status" => tasks::Task::list_tasks_by_status()?,
-        "return" => {}
+        "return" => return Ok(()),
         _ => unreachable!("Unexpected menu option"),
     }
 

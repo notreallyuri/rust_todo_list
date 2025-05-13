@@ -11,7 +11,7 @@ pub fn handler() -> Result<(), Box<dyn std::error::Error>> {
     match delete_menu {
         "delete_done" => tasks::Task::delete_done_tasks()?,
         "delete_by_id" => tasks::Task::delete_task()?,
-        "return" => {}
+        "return" => return Ok(()),
         _ => unreachable!("Unexpected menu option"),
     }
 

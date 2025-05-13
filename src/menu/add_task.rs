@@ -47,7 +47,7 @@ pub fn handler() -> Result<(), Box<dyn std::error::Error>> {
 
             tasks::Task::create(title, description, content, status, due_date_parsed)?;
         }
-        "return" => {}
+        "return" => return Ok(()),
         _ => unreachable!("Unexpected menu option"),
     }
 
