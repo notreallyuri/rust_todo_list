@@ -71,7 +71,7 @@ impl Task {
         Ok(tasks)
     }
 
-    pub fn select_task() -> Result<(), Box<dyn std::error::Error>> {
+    pub fn read_task() -> Result<(), Box<dyn std::error::Error>> {
         let task_dir = read_pointers(Pointers::Task)?;
         let mut items: Vec<(String, String, String)> = vec![];
         let tasks: Vec<Task> = Task::load_tasks(&task_dir)?;
@@ -115,6 +115,39 @@ impl Task {
         Ok(())
     }
 
+    pub fn list_tasks_by_status() -> Result<(), Box<dyn std::error::Error>> {
+        let task_dir: String = read_pointers(Pointers::Task)?;
+        let tasks: Vec<Task> = Task::load_tasks(&task_dir)?;
+        let mut items: Vec<(String, String, String)> = vec![];
+
+        let status: String = cliclack::select("Select task status")
+            .item("todo".to_string(), "To Do", "")
+            .item("in_progress".to_string(), "In Progress", "")
+            .item("done".to_string(), "Done", "")
+            .interact()?;
+
+        for task in tasks {
+            if task.status == status {
+                let id_str: String = task.id.to_string();
+                let label: String = format!("{}: {}", task.id, task.title);
+                let hint: String = format!("Status: {}", task.status);
+
+                items.push((id_str, label, hint));
+            }
+        }
+
+        if items.is_empty() {
+            cliclack::log::info(format!("📭 No tasks found with status '{}'", status))?;
+            return Ok(());
+        }
+
+        items.iter().for_each(|(_, label, hint)| {
+            let _ = cliclack::log::info(format!("📌 {} ({})", label, hint));
+        });
+
+        Ok(())
+    }
+
     pub fn list_tasks() -> Result<(), Box<dyn std::error::Error>> {
         let task_dir: String = read_pointers(Pointers::Task)?;
         let mut items: Vec<(String, String, String)> = vec![];
@@ -134,6 +167,49 @@ impl Task {
             items.iter().for_each(|(_, label, hint)| {
                 let _ = cliclack::log::info(format!("📌 {} ({})", label, hint));
             })
+        }
+
+        Ok(())
+    }
+
+    pub fn delete_done_tasks() -> Result<(), Box<dyn std::error::Error>> {
+        let task_dir: String = read_pointers(Pointers::Task)?;
+        let tasks: Vec<Task> = Task::load_tasks(&task_dir)?;
+        let mut items: Vec<(String, String, String)> = vec![];
+
+        for task in tasks {
+            if task.status == "done" {
+                let id_str: String = task.id.to_string();
+                let label: String = format!("{}: {}", task.id, task.title);
+                let hint: String = format!("Status: {}", task.status);
+
+                items.push((id_str, label, hint));
+            }
+        }
+
+        if items.is_empty() {
+            cliclack::log::info("📭 No done tasks found.")?;
+            return Ok(());
+        }
+
+        let confirm: bool = cliclack::confirm("⚠️ Are you sure you want to delete all done tasks?")
+            .initial_value(false)
+            .interact()?;
+
+        if confirm {
+            for (id_str, _, _) in items {
+                let task_id: u32 = id_str.parse::<u32>()?;
+                let file_path: PathBuf =
+                    std::path::Path::new(&task_dir).join(format!("{}.json", task_id));
+                if file_path.exists() {
+                    fs::remove_file(&file_path)?;
+                    cliclack::log::info(format!("✅ Task {} deleted successfully", task_id))?;
+                } else {
+                    cliclack::log::error(format!("❌ Task {} not found", task_id))?;
+                }
+            }
+        } else {
+            cliclack::log::info("❌ Task deletion cancelled")?;
         }
 
         Ok(())
