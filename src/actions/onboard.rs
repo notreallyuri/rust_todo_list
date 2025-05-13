@@ -3,9 +3,9 @@ use std::fs;
 use std::path::Path;
 
 pub fn onboarding() -> Result<(String, String), Box<dyn std::error::Error>> {
-    let task_path: String = cliclack::input("Where should we save the tasks? (Default: ./tasks)")
-        .placeholder("./tasks")
-        .default_input("./tasks")
+    let task_path: String = cliclack::input("Where should we save the tasks? (Default: ./data/tasks)")
+        .placeholder("./data/tasks")
+        .default_input("./data/tasks")
         .validate(|input: &String| {
             if input.is_empty() {
                 Err("Please enter a valid path")
@@ -18,9 +18,9 @@ pub fn onboarding() -> Result<(String, String), Box<dyn std::error::Error>> {
         .interact()?;
 
     let config_path: String =
-        cliclack::input("Where should we save the config? (Default: ./config.json")
-            .placeholder("./config.json")
-            .default_input("./config.json")
+        cliclack::input("Where should we save the config? (Default: ./data/config.json")
+            .placeholder("./data/config.json")
+            .default_input("./data/config.json")
             .validate(|input: &String| {
                 if input.is_empty() {
                     Err("Please enter a valid path")
